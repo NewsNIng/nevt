@@ -1,16 +1,21 @@
-/**
- * 事件处理类
- */
+
+
+interface IOptions {
+	lazy?: boolean; // 是否支持惰性离线消息，（先发布，后订阅也能收到事件，需要发布和订阅同时设置此值）
+}
 
 export default class Events {
-	// 事件列表
+	// normal events
 	private events: { [key: string]: any };
-	// 单次事件列表
+	// once events
 	private eventsOne: { [key: string]: any };
+	// lazy events
+	private eventsLazy: { [key: string]: any };
 
 	constructor() {
-		this.events = {};
-		this.eventsOne = {};
+		this.events = Object.create(null);
+		this.eventsOne = Object.create(null);
+		this.eventsLazy = Object.create(null);
 	}
 
 	/**
@@ -18,14 +23,26 @@ export default class Events {
 	 * @param {String} eventName 事件名称
 	 * @param {Function} callback 事件触发后执行的回调函数
 	 */
-	public on(eventName: string, callback: (data?: any) => void): () => void {
+	public on(eventName: string, callback: (data?: any) => void, option?: IOptions): () => void {
 		// 获取已存在的单次事件列表
 		if (!this.events[eventName]) {
 			this.events[eventName] = [];
 		}
 		// 添加至数组
 		this.events[eventName].push(callback);
+		if(option && option.lazy) {
+			// 处理惰性事件
+			this.execLazyEvents(eventName, callback);
+		}
 		return callback;
+	}
+
+
+	private execLazyEvents(eventName: string, callback: (data?: any) => void) {
+		const lazys = this.eventsLazy[eventName] || [];
+		for (let i = 0, l = lazys.length; i < l; i += 1) {
+			callback.call(callback, lazys[i]);
+		}
 	}
 
 	/**
@@ -33,13 +50,17 @@ export default class Events {
 	 * @param {String} eventName 事件名称
 	 * @param {Function} callback 事件触发后执行的回调函数
 	 */
-	public once(eventName: string, callback: (data?: any) => void): () => void {
+	public once(eventName: string, callback: (data?: any) => void, option?: IOptions): () => void {
 		// 获取已存在的单次事件列表
 		if (!this.eventsOne[eventName]) {
 			this.eventsOne[eventName] = [];
 		}
 		// 添加至数组
 		this.eventsOne[eventName].push(callback);
+		if(option && option.lazy) {
+			// 处理惰性事件
+			this.execLazyEvents(eventName, callback);
+		}
 		return callback;
 	}
 
@@ -48,7 +69,7 @@ export default class Events {
 	 * @param {String} eventName 事件名称
 	 * @param {Object} data 传参参数值
 	 */
-	public emit(eventName: string, data?: any) {
+	public emit(eventName: string, data?: any, option?: IOptions) {
 		// 获取全部事件列表 和 单次事件列表，并且合并
 		const es = [
 			...(this.events[eventName] || []),
@@ -66,6 +87,15 @@ export default class Events {
 		}
 		// 单次事件清空
 		this.eventsOne[eventName] = [];
+
+		if(option && option.lazy) {
+			// 处理惰性事件
+			if(!this.eventsLazy[eventName]) {
+				this.eventsLazy[eventName] = [data];
+			}else {
+				this.eventsLazy[eventName].push(data);
+			}
+		}
 	}
 
 	/**
