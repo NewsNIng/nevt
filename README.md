@@ -4,8 +4,10 @@
 
 ### How Install
 if u r use npm
-> npm i nevt
-or yarn
+> npm i nevt  
+
+or yarn  
+
 > yarn add nevt
 
 ### How Use
