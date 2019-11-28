@@ -1,0 +1,16 @@
+{
+  "name": "nevt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "release": "tsc && npm publish --registry https://registry.npmjs.org/"
+  },
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "event"
+  ],
+  "author": "msr7"
+}
